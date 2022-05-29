@@ -5,6 +5,8 @@ from torch.utils.data.dataset import random_split
 import torch.nn.functional as F
 import torchsummary
 
+
+from basicblock import BasicBlock
 import os
 import cv2
 import numpy as np
