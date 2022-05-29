@@ -129,7 +129,7 @@ class MyDataset2(Dataset):
         x = torch.tensor(x, dtype=torch.float)
         
         y = np.expand_dims(cv2.imread(self.y_file_list[idx], cv2.IMREAD_GRAYSCALE)[75:-75, :], axis=0)
-        y = torch.tensor(y > 0, dtype=torch.float)
+        y = torch.tensor(y > 0, dtype=torch.float) # heatmap 데이터에서 0보다 큰 값의 픽셀은 전부 vehicle이다.
         return x, y 
 
 
