@@ -4,9 +4,13 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import cv2
+import os
 
 from hm2hm_center_train import Heatmap2FeatNetwork
 from img2heatmap_train import Img2Heatmap
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print("Using {} device".format(device))
 
 x1_path = './data_/original_img'
 x2_path = './data_/heatmap'
