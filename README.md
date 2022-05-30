@@ -26,8 +26,11 @@ original image에서 heatmap 부분을 추출한 masked img, 차량에 해당되
 
 ## Heatmap(masked img) -> Center (hm2center model)
 ![hm2center](https://user-images.githubusercontent.com/11612272/170927347-bd5bfb91-ed19-4b1d-9c9e-bd8bea669f04.png)
-추출한 heatmap로 masked_img를 만듦, masked_img를 입력으로 하여 각 차량의 중심점을 추출함
 
+
+* img2heatmap model로 추출한 heatmap로 masked_img를 만들고 이를 입력으로 하여 각 차량의 중심점을 추출함
+* 원본 이미지의 1/4의 크기의 heatmap_center를 출력한다.
+* hm_center는 각 차량의 중심만 1이고 이외엔 0이다.
 * NMS (Non Max Supression)
 ```python
 output = self.sigmoid(output)
