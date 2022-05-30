@@ -27,4 +27,4 @@ output = self.sigmoid(output)
 hmax = F.max_pool2d(output, (3, 3), stride=1, padding=1)
 output = output * (hmax == output).float()
 ```
-** 특징점 주변 낮은 값의 픽셀은 걸러지고 가장 큰 값의 픽셀만 남는다.
+> 특징점 주변 낮은 값의 픽셀은 걸러지고 가장 큰 값의 픽셀만 남는다.
