@@ -38,7 +38,7 @@ output = output * (hmax == output).float()
 * Focal Loss 사용
 ```python
 def FL_of_CornerNet(X, y, alpha=2, beta=4):
-  p_inds = y.eq(1).float()
+  p_inds = y.eq(1).float() # eq(1) : 1이면 True, 아니면 False.
   n_inds = (-p_inds + 1.)
 
   p_loss = (torch.log(X) * torch.pow(1 - X, alpha) * p_inds).sum()
