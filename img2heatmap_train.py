@@ -12,10 +12,6 @@ import numpy as np
 import time
 from datetime import timedelta
 
-# image size == 3, 1608, 362
-device = "cuda" if torch.cuda.is_available() else "cpu"
-print("Using {} device".format(device))
-
 class Img2Heatmap(nn.Module):
     def __init__(self):
         super(Img2Heatmap, self).__init__()
@@ -46,7 +42,7 @@ class Img2Heatmap(nn.Module):
         ) # 128, 45, 201
         self.downsample2 = nn.Sequential(
             nn.Conv2d(128, 256, kernel_size=1, stride=2, bias=False),
-            nn.BatchNorm2d(256, momentum=BN_MOMENTUM)
+            nn.BatchNorm2d(256)
         )
 
         self.block256 = nn.Sequential(
@@ -134,6 +130,10 @@ class MyDataset2(Dataset):
 
 
 if __name__ == '__main__':
+    # image size == 3, 1608, 362
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print("Using {} device".format(device))
+
     C, H, W = 3, 362, 1608
     image_data_path = './original_img'
     heatmap_data_path = './heatmap'
@@ -166,7 +166,7 @@ if __name__ == '__main__':
 
     model.to(device)
 
-    torchsummary.summary(model, (C, H, W), batch_size=12, device=device)
+    torchsummary.summary(model, (C, H, W), batch_size=4, device=device)
 
     optimizer = optim.Adam(model.parameters(), lr=0.0001)
 
@@ -205,7 +205,7 @@ if __name__ == '__main__':
                 pred = model(X)
                 val_loss += FL_of_CornerNet(pred, Y).item()
             if i == 0 or preval_loss > val_loss:
-                torch.save(model, 'best_model_img2heatmap.pt')
+                torch.save(model, 'new_img2heatmap.pt')
                 preval_loss = val_loss
                 print(f'val_loss: {val_loss} --- val_loss decreased, best model saved.')
             else:
