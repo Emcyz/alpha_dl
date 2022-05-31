@@ -52,3 +52,6 @@ def FL_of_CornerNet(X, y, alpha=2, beta=4):
   return -(p_loss + n_loss) / p_num
 ```
 > 배경 즉 특징점이 아닌 영역에서의 loss 값을 상대적으로 줄인다.
+
+## 결과
+![test_result](https://user-images.githubusercontent.com/11612272/171121428-b244acc4-b4ba-4581-a84b-78d94f0350af.png)
