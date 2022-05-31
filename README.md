@@ -55,3 +55,4 @@ def FL_of_CornerNet(X, y, alpha=2, beta=4):
 
 ## 결과
 ![test_result](https://user-images.githubusercontent.com/11612272/171121428-b244acc4-b4ba-4581-a84b-78d94f0350af.png)
+* 회색은 heatmap > 0.7, 파란색 원은 hm_center > 0.7 인 영역
