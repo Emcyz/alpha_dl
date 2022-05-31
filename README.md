@@ -61,3 +61,4 @@ def FL_of_CornerNet(X, y, alpha=2, beta=4):
 * 회색은 heatmap > 0.7, 파란색 원은 hm_center > 0.7 인 영역
 * train set에선 괜찮치만 test set에선 성능이 안 좋다.
 * 용량 문제로 데이터를 10000개에서 3000개로 줄인 것이 원인으로 보임
+* test set은 파일 크기가 커서 github에 올리지 못함
