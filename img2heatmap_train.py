@@ -23,7 +23,7 @@ class Img2Heatmap(nn.Module):
         self.layer1 = nn.Sequential(
             nn.ReplicationPad2d((0, 0, 3, 3)),
             nn.Conv2d(3, 64, kernel_size=8, stride=2, padding=(0, 3), padding_mode='circular', bias=False),
-            nn.BatchNorm2d(64, momentum=BN_MOMENTUM)
+            nn.BatchNorm2d(64)
         ) # 64, 181, 804
         
         self.layer2 = nn.Sequential(
@@ -37,7 +37,7 @@ class Img2Heatmap(nn.Module):
         )
         self.downsample1 = nn.Sequential(
             nn.Conv2d(64, 128, kernel_size=1, stride=2, bias=False),
-            nn.BatchNorm2d(128, momentum=BN_MOMENTUM)
+            nn.BatchNorm2d(128)
         )
 
         self.block128 = nn.Sequential(
