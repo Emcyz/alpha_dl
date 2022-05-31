@@ -16,12 +16,12 @@ from datetime import timedelta
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print("Using {} device".format(device))
 
-ORIGINAL_PANORAMA_PATH = 'data_/original_img'
-HEATMAP_PATH = 'data_/heatmap'
-HM_CENTER_PATH = 'data_/hm_center'
-LIDAR_PATH = 'data_/lidar'
-BBOX_2D_PATH = 'data_/2D_BBOX'
-BBOX_3D_PATH = 'data_/3D_BBOX'
+ORIGINAL_PANORAMA_PATH = './original_img'
+HEATMAP_PATH = './heatmap'
+HM_CENTER_PATH = './hm_center'
+#LIDAR_PATH = './lidar'
+#BBOX_2D_PATH = './2D_BBOX'
+#BBOX_3D_PATH = './3D_BBOX'
 
 class Heatmap2Feat_Dataset_(Dataset):
     def __init__(self, x1_path, x2_path, y_path): # original_img, heatmap, hm_center
