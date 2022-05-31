@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import torch
 import torch.nn.functional as F
 import numpy as np
@@ -12,67 +10,48 @@ from img2heatmap_train import Img2Heatmap
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print("Using {} device".format(device))
 
-x1_path = './data_/original_img'
-x2_path = './data_/heatmap'
+original_img_path = './original_img'
+heatmap_path = './heatmap'
 
-x1_file_names = os.listdir(x1_path)
-x1_file_names.sort()
-x1_file_list = [os.path.join(x1_path, filename) for filename in x1_file_names]
-x2_file_names = os.listdir(x2_path)
-x2_file_names.sort()
-x2_file_list = [os.path.join(x2_path, filename) for filename in x2_file_names]
+orig_img_file_names = os.listdir(original_img_path)
+orig_img_file_names.sort()
+orig_img_file_list = [os.path.join(original_img_path, filename) for filename in orig_img_file_names]
+hm_file_names = os.listdir(heatmap_path)
+hm_file_names.sort()
+hm_file_list = [os.path.join(heatmap_path, filename) for filename in hm_file_names]
 
-model = torch.load('best_model_hm2feat.pt')
-model.to(device)
-model.eval()
+img2heatmap = torch.load('best_model_normal_heatmap.pt')
+img2heatmap.to(device)
+img2heatmap.eval()
 
-for idx in range(len(x1_file_list)):
-    orig_pano = cv2.imread(x1_file_list[idx], cv2.IMREAD_COLOR)[75:-75, :, :]
-    heatmap = np.expand_dims(cv2.imread(x2_file_list[idx], cv2.IMREAD_GRAYSCALE)[75:-75, :], axis=-1)
+hm2hm_center = torch.load('best_model_hm2feat.pt')
+hm2hm_center.to(device)
+hm2hm_center.eval()
 
-    masked_img = (orig_pano * (heatmap >= 1).astype(np.int)).transpose(2, 0, 1)
-    masked_img = torch.tensor(np.expand_dims(masked_img, 0), dtype=torch.float)
-    masked_img = masked_img.to(device)
+hm_threshold = 0.7
+ct_threshold = 0.7
 
-    pred = np.array(model(masked_img).cpu().detach().numpy() * 255., dtype=np.uint8)[0, 0, :, :]
-    pred = cv2.resize(pred, (1608, 362))
-    p_inds = np.where(pred >= 128)
-    img = orig_pano.copy().astype(np.float32)
-    #img[:, :, 0] += pred * 255.
-    #img[:, :, 2] += pred
-    #img[img >= 255.0] = 255.0
+for idx in range(len(orig_img_file_list)):
+    orig_img = np.expand_dims(cv2.imread(orig_img_file_list[idx], cv2.IMREAD_COLOR)[75:-75, :, :], axis=0)
+    orig_img = torch.tensor(orig_img, dtype=torch.float).to(device)
+    hm_pred = img2heatmap(orig_img).cpu().detach().numpy()[0, 0, :, :] # value : 0 ~ 1, shape : (362, 1608)
+
+    heatmap = np.expand_dims(cv2.imread(hm_file_list[idx], cv2.IMREAD_GRAYSCALE)[75:-75, :], axis=-1)
+    masked_img = (orig_img * (heatmap >= 1).astype(np.int)).transpose(2, 0, 1)
+    masked_img = torch.tensor(np.expand_dims(masked_img, 0), dtype=torch.float).to(device)
+
+    hm_ct_pred = hm2hm_center(masked_img).cpu().detach().numpy()[0, 0, :, :] # value : 0 ~ 1, shape : (362 // 4, 1608 // 4)
+
+    # prediction end
+
+    heat_x_inds, heat_y_inds = np.where(hm_pred >= hm_threshold)
+    orig_img[heat_x_inds, heat_y_inds, :] = 100
+
+    p_inds = np.where(hm_ct_pred >= ct_threshold)
     x_inds, y_inds = p_inds
     for x, y in zip(x_inds, y_inds):
-        cv2.circle(img, (y, x), 5, (255, 0, 0), -1)
+        cv2.circle(orig_img, (y*4, x*4), 7, (255, 0, 0))
 
-    img = img.astype(np.uint8)
-    cv2.imshow('img', img)
-    cv2.imshow('heatmap', pred)
+    cv2.imshow('img', orig_img)
     if cv2.waitKey(0) & 0xFF == 27:
         break
-
-model = torch.load('best_model_normal_heatmap.pt')
-model.to(device)
-model.eval()
-
-video_file = 'testset/testvideo.avi'
-cap = cv2.VideoCapture(video_file)
-with torch.no_grad():
-    while True:
-        ret, img = cap.read()
-        X = torch.tensor(np.expand_dims(np.transpose(img, (2, 0, 1)), axis=0), dtype=torch.float)
-        X = X.to(device)
-        pred = np.array(model(X).cpu().detach().numpy(), dtype=np.float)
-        pred = pred[0, 0, :, :]
-        red_mask = (pred > 0.7).astype(np.float)
-        #result = cv2.resize(np.squeeze(np.array(pred.cpu())), dsize=None, fx=4, fy=4)
-        img = np.array(img, dtype=np.float32)
-        img[:, :, 0] += pred * 255.
-        img[:, :, 2] += pred * 255.
-        img[img >= 255.0] = 255.0
-        img = np.array(img, dtype=np.uint8)
-        cv2.imshow('img', img)
-        cv2.imshow('heatmap', pred)
-        if cv2.waitKey(1) & 0xFF == 27:
-            break
-cap.release()
