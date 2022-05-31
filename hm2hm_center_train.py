@@ -13,16 +13,6 @@ import numpy as np
 import time
 from datetime import timedelta
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-print("Using {} device".format(device))
-
-ORIGINAL_PANORAMA_PATH = './original_img'
-HEATMAP_PATH = './heatmap'
-HM_CENTER_PATH = './hm_center'
-#LIDAR_PATH = './lidar'
-#BBOX_2D_PATH = './2D_BBOX'
-#BBOX_3D_PATH = './3D_BBOX'
-
 class Heatmap2Feat_Dataset_(Dataset):
     def __init__(self, x1_path, x2_path, y_path): # original_img, heatmap, hm_center
         super(Heatmap2Feat_Dataset_, self).__init__()
@@ -45,7 +35,7 @@ class Heatmap2Feat_Dataset_(Dataset):
         orig_pano = cv2.imread(self.x1_file_list[idx], cv2.IMREAD_COLOR)[75:-75, :, :]
         heatmap = np.expand_dims(cv2.imread(self.x2_file_list[idx], cv2.IMREAD_GRAYSCALE)[75:-75, :], axis=-1)
 
-        masked_img = (orig_pano * (heatmap >= 1).astype(np.int)).transpose(2, 0, 1)
+        masked_img = (orig_pano * (heatmap >= 1).astype(np.int32)).transpose(2, 0, 1)
         masked_img = torch.tensor(masked_img, dtype=torch.float)
 
         hm_center_ = cv2.imread(self.y_file_list[idx], cv2.IMREAD_GRAYSCALE)[75:-75, :]
@@ -56,14 +46,14 @@ class Heatmap2Feat_Dataset_(Dataset):
 
         return masked_img, hm_center
 
-class Heatmap2FeatNetwork(nn.Module): # 모델 정의 My Convolutional Neural Network
+class Heatmap2FeatNetwork(nn.Module):
     def __init__(self):
         super(Heatmap2FeatNetwork, self).__init__()
         # 3, 362, 1608
         self.layer1 = nn.Sequential(
             nn.ReplicationPad2d((0, 0, 3, 3)),
             nn.Conv2d(3, 64, kernel_size=8, stride=2, padding=(0, 3), padding_mode='circular', bias=False),
-            nn.BatchNorm2d(64, momentum=BN_MOMENTUM)
+            nn.BatchNorm2d(64)
         ) # 64, 181, 804
         
         self.layer2 = nn.Sequential(
@@ -77,17 +67,13 @@ class Heatmap2FeatNetwork(nn.Module): # 모델 정의 My Convolutional Neural Ne
         )
         self.downsample1 = nn.Sequential(
             nn.Conv2d(64, 128, kernel_size=1, stride=2, bias=False),
-            nn.BatchNorm2d(128, momentum=BN_MOMENTUM)
+            nn.BatchNorm2d(128)
         )
 
         self.block128 = nn.Sequential(
             BasicBlock(64, 128, 2, self.downsample1),
             BasicBlock(128, 128, 1)
         ) # 128, 45, 201
-
-
-
-        
 
         self.layer5 = nn.Conv2d(192, 64, kernel_size=1, stride=1, padding=0)
         self.layer6 = nn.Conv2d(64, 1, kernel_size=1, stride=1, padding=0)
@@ -118,10 +104,18 @@ class Heatmap2FeatNetwork(nn.Module): # 모델 정의 My Convolutional Neural Ne
         return output
       
 if __name__ == '__main__':
-    C, H, W = 3, 362, 1608
-    image_data_path = 'data_/original_img'
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print("Using {} device".format(device))
 
-    dataset_len = len(os.listdir(image_data_path))
+    ORIGINAL_PANORAMA_PATH = './original_img'
+    HEATMAP_PATH = './heatmap'
+    HM_CENTER_PATH = './hm_center'
+    #LIDAR_PATH = './lidar'
+    #BBOX_2D_PATH = './2D_BBOX'
+    #BBOX_3D_PATH = './3D_BBOX'
+
+    C, H, W = 3, 362, 1608
+    dataset_len = len(os.listdir(ORIGINAL_PANORAMA_PATH))
 
     train_dataset, val_dataset = random_split(Heatmap2Feat_Dataset_(ORIGINAL_PANORAMA_PATH, HEATMAP_PATH, HM_CENTER_PATH), [round(dataset_len * 0.9), round(dataset_len * 0.1)])
 
@@ -145,7 +139,7 @@ if __name__ == '__main__':
         model = Heatmap2FeatNetwork()
         print('Training New Model')
     else:
-        model = torch.load('best_model1.pt')
+        model = torch.load('best_model.pt')
         print('load model')
 
     model.to(device)
@@ -189,7 +183,7 @@ if __name__ == '__main__':
                 pred = model(X)
                 val_loss += FL_of_CornerNet(pred, Y).item()
             if i == 0 or preval_loss > val_loss:
-                torch.save(model, 'best_model_hm2feat.pt')
+                torch.save(model, 'new_hm2feat.pt')
                 preval_loss = val_loss
                 print(f'val_loss: {val_loss} --- val_loss decreased, best model saved.')
             else:
