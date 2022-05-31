@@ -135,8 +135,8 @@ class MyDataset2(Dataset):
 
 if __name__ == '__main__':
     C, H, W = 3, 362, 1608
-    image_data_path = 'data_/original_img'
-    heatmap_data_path = 'data_/heatmap'
+    image_data_path = './original_img'
+    heatmap_data_path = './heatmap'
 
     dataset_len = len(os.listdir(image_data_path))
     train_dataset, val_dataset = random_split(MyDataset2(image_data_path, heatmap_data_path), [round(dataset_len * 0.9), round(dataset_len * 0.1)])
